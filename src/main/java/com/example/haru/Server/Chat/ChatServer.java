@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.haru.Server.Users.UserManager;
+
 // singleton chatServer as we only want one instance
 public class ChatServer {
     private static ChatServer instance;
@@ -13,11 +15,13 @@ public class ChatServer {
     private final int portNumber;
     private boolean running;
     private List<ClientHandler> connectedClients;
+    private UserManager userManager;
     
     // private constructor prevents instantiation from outside the class
     private ChatServer(int portNumber) {
         this.portNumber = portNumber;
         this.connectedClients = new ArrayList<>();
+        this.userManager = new UserManager();
         this.running = false;
     }
 
@@ -51,12 +55,39 @@ public class ChatServer {
 
     public void removeClient(ClientHandler client) {
         this.connectedClients.remove(client);
+        if (client.getUsername() != null) {
+            userManager.removeUser(client.getUsername());
+        }
     }
 
     // methods for broadcasting messages, adding/removing clients, etc
     public void broadcast(String message, ClientHandler sender) {
+        System.out.println("Broadcasting: " + message);
         for (ClientHandler client : this.connectedClients) {
+            if (sender != null && client == sender) {
+                continue;
+            }
             client.sendMessage(message);
+        }
+    }
+
+    public UserManager getUserManager() {
+        return this.userManager;
+    }
+
+    // clean shutdown method
+    public void stop() {
+        this.running = false;
+        for (ClientHandler client : new ArrayList<>(connectedClients)) {
+            client.disconnect();
+        }
+
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                System.out.println("Error closing server socket: " + e.getMessage());
+            }
         }
     }
 }
