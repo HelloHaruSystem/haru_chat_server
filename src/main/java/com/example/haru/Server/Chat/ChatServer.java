@@ -49,10 +49,11 @@ public class ChatServer {
                 new Thread(clientThread).start();
             } 
         } catch (IOException e) {
-            System.out.println("Error acepting clients ");
+            System.out.println("Error accepting clients ");
         }
     }
 
+    // methods for broadcasting messages, adding/removing clients, etc
     public void removeClient(ClientHandler client) {
         this.connectedClients.remove(client);
         if (client.getUsername() != null) {
@@ -60,7 +61,6 @@ public class ChatServer {
         }
     }
 
-    // methods for broadcasting messages, adding/removing clients, etc
     public void broadcast(String message, ClientHandler sender) {
         System.out.println("Broadcasting: " + message);
         for (ClientHandler client : this.connectedClients) {
@@ -76,6 +76,7 @@ public class ChatServer {
     }
 
     // clean shutdown method
+    // TODO: be able to trigger this
     public void stop() {
         this.running = false;
         for (ClientHandler client : new ArrayList<>(connectedClients)) {

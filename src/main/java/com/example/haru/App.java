@@ -17,5 +17,4 @@ public class App {
         ChatServer server = ChatServer.getInstance(portAsInteger);
         server.start();
     }
-
 }

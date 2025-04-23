@@ -53,7 +53,7 @@ public class ClientHandler implements Runnable {
             }
             
         } catch (IOException e) {
-            System.out.println("Error handeling client... " + e.getMessage() + "\n Disconecting client(" + this.username + ")...");
+            System.out.println("Error handeling client... " + e.getMessage() + "\n Disconnecting client(" + this.username + ")...");
         } finally {
             disconnect();
         }
