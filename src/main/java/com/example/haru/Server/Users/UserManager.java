@@ -4,26 +4,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.example.haru.Server.Chat.ClientHandler;
+import com.example.haru.Server.auth.TokenValidator;
+
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class UserManager {
     // TODO: proper authentication
-    private Map<String, String> credentials;
     private Map<String, ClientHandler> activeUsers;
+    private TokenValidator tokenValidator;
 
     public UserManager() {
-        this.credentials = new HashMap<>();
         this.activeUsers = new HashMap<>();
+
+        // Load auth server URL from .env files
+        Dotenv envFile = Dotenv.load();
+        String authServerUrl = envFile.get("AUTH_SERVER_URL");
     }
 
     // add username and password restrictions and requirements
     // use proper hashing for passwords
     // consider using session tokens
     public boolean registerUser(String username, String password, ClientHandler handler) {
-        if (credentials.containsKey(username)) {
+        if (.containsKey(username)) {
             return false;
         }
 
-        credentials.put(username, password);
+
         activeUsers.put(username, handler);
         return true;
     }
@@ -41,7 +47,7 @@ public class UserManager {
     }
 
     public boolean authenticate(String username, String password, ClientHandler handler) {
-        if (credentials.containsKey(username) && credentials.get(username).equals(password)) {
+        if (.containsKey(username) && .get(username).equals(password)) {
             if (handler != null) {
                 activeUsers.put(username, handler);
             }
