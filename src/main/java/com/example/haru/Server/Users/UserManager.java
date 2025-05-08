@@ -15,7 +15,7 @@ public class UserManager {
         this.activeUsers = new HashMap<>();
     }
 
-    // add username and password restrictions and requrements
+    // add username and password restrictions and requirements
     // use proper hashing for passwords
     // consider using session tokens
     public boolean registerUser(String username, String password, ClientHandler handler) {
