@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.example.haru.Server.Users.UserManager;
 
-// singleton chatServer as we only want one instance
+// singleton ChatServer as we only want one instance
 public class ChatServer {
     private static ChatServer instance;
     private ServerSocket serverSocket;

@@ -26,7 +26,7 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            // Set up communications streams second bolean arguemnt is for auto flush
+            // Set up communications streams second boolean argument is for auto flush
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
             this.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
@@ -48,12 +48,12 @@ public class ClientHandler implements Runnable {
                   handleCommand(message);
                 } else {
                     // regular broadcast
-                    server.broadcast(this.username + ": " + message, this);
+                    server.broadcast(this.username + " " + message, this);
                 }
             }
             
         } catch (IOException e) {
-            System.out.println("Error handeling client... " + e.getMessage() + "\n Disconnecting client(" + this.username + ")...");
+            System.out.println("Error handling client... " + e.getMessage() + "\n Disconnecting client(" + this.username + ")...");
         } finally {
             disconnect();
         }
@@ -91,7 +91,7 @@ public class ClientHandler implements Runnable {
                 this.clientSocket.close();
             }
         } catch (IOException e) {
-            System.out.println("Error disconecting client(" + this.username + ") " + e.getMessage());
+            System.out.println("Error disconnecting client(" + this.username + ") " + e.getMessage());
         }
     }
 
@@ -110,7 +110,7 @@ public class ClientHandler implements Runnable {
         if (targetClient == null) {
             sendMessage("User " + targetUser + " is not online.");
         } else {
-            targetClient.sendMessage("[Private Message]\n" + this.username + ":" + privateMessage);
+            targetClient.sendMessage("[Private Message]\n" + this.username + privateMessage);
         }
     }
 
