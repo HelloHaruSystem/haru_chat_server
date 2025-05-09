@@ -161,7 +161,8 @@ public class ClientHandler implements Runnable {
         if (targetClient == null) {
             sendMessage("User " + targetUser + " is not online.");
         } else {
-            targetClient.sendMessage("[Private Message]\n" + this.username + privateMessage);
+            targetClient.sendMessage("[Private from " + this.username + "]: " + privateMessage);
+            sendMessage("[Private to " + targetUser + "]: " + privateMessage);
         }
     }
 
