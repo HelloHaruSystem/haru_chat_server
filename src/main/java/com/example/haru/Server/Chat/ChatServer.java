@@ -80,7 +80,7 @@ public class ChatServer {
     public void stop() {
         this.running = false;
         for (ClientHandler client : new ArrayList<>(connectedClients)) {
-            client.disconnect();
+            client.disconnect(true);
         }
 
         if (serverSocket != null && !serverSocket.isClosed()) {
