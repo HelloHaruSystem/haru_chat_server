@@ -36,6 +36,9 @@ public class ClientHandler implements Runnable {
             // initialize UserManager
             this.userManager = server.getUserManager();
 
+            // Authenticating process
+            sendMessage("Authenticating please use format: username,token");
+
             // authentication loop
             if (!authenticateUser()) {
                 // authentication failed, disconnect client
@@ -43,10 +46,10 @@ public class ClientHandler implements Runnable {
                 return;
             }
             
+            // send welcome message
+            sendMessage("Authentication successful");
 
-            // first message from client is telling the rest of the server that they have joined the chat
-            // TODO: log that a user have joined
-            this.username = in.readLine(); // changes this in the future and let the usermanager handle it?
+            // broadcast that a new user has joined the chat
             server.broadcast(this.username + " has joined the chat!", this);
 
             // the main message loop
@@ -61,15 +64,14 @@ public class ClientHandler implements Runnable {
             }
             
         } catch (IOException e) {
-            System.out.println("Error handling client... " + e.getMessage() + "\n Disconnecting client(" + this.username + ")...");
+            System.out.println("Error handling client... " + e.getMessage() +
+                               "\n Disconnecting client(" + this.username + ")...");
         } finally {
             disconnect();
         }
     }
 
     public boolean authenticateUser() throws IOException {
-        sendMessage("Authenticating please stand by...");
-
         int attempts = 0;
         while (attempts < MAX_AUTH_ATTEMPTS) {
             String authInput = in.readLine();
@@ -79,7 +81,7 @@ public class ClientHandler implements Runnable {
 
             String[] authParts = authInput.split(",", 2);
             if (authParts.length != 2) {
-                System.out.println("invalid auth attempt");
+                sendMessage(("Invalid format. Use: username,token"));
                 attempts++;
                 continue;
             }
@@ -99,12 +101,12 @@ public class ClientHandler implements Runnable {
                 this.username = username;
                 return true;
             } else {
-                System.out.println("Authentication failed. try again.");
+                sendMessage("Authentication failed. Invalid token.");
                 attempts++;
             }
         }
 
-        System.out.println("Too many authentication attempts has made. Disconnecting...");
+        sendMessage("Too many failed authentication attempts. Disconnecting...");
         return false;
     }
 
