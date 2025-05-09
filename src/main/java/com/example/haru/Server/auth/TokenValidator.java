@@ -10,7 +10,6 @@ import java.time.Duration;
 import org.json.JSONObject;
 
 public class TokenValidator {
-    //TODO: Move this to .env file
     private final String authServerUrl;
     private final HttpClient httpClient;
 
@@ -24,7 +23,6 @@ public class TokenValidator {
             .build();
     }
 
-    //TODO: remove debug print commands afterIt has been tested
     public ValidateResult validateToken(String username, String token) throws IOException, InterruptedException {
         URI uri = URI.create(this.authServerUrl + "/validate");
         

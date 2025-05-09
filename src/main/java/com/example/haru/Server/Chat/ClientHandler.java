@@ -99,6 +99,7 @@ public class ClientHandler implements Runnable {
             // validate token with auth server
             if (this.userManager.authenticateWithToken(username, token, this)) {
                 this.username = username;
+                System.out.println("Authentication sucessful"); // debug
                 return true;
             } else {
                 sendMessage("Authentication failed. Invalid token.");
