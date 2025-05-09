@@ -27,58 +27,89 @@ public class ClientHandler implements Runnable {
     }
 
     @Override
-    public void run() {
-        try {
-            // Set up communications streams second boolean argument is for auto flush
-            this.out = new PrintWriter(clientSocket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+public void run() {
+    try {
+        // Set up communications streams
+        this.out = new PrintWriter(clientSocket.getOutputStream(), true);
+        this.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            // initialize UserManager
-            this.userManager = server.getUserManager();
+        // Initialize UserManager
+        this.userManager = server.getUserManager();
 
-            // Authenticating process
-            sendMessage("Authenticating please use format: username,token");
+        // Send authentication prompt
+        sendMessage("Authenticating please use format: username,token");
+        
+        // Get initial command - it might include mode info
+        String authInput = in.readLine();
+        if (authInput == null) {
+            disconnect(false);
+            return;
+        }
+        
+        // Check if this is a verification request
+        boolean isVerificationOnly = false;
+        if (authInput.startsWith("VERIFY:")) {
+            isVerificationOnly = true;
+            authInput = authInput.substring(7); // Remove the "VERIFY:" prefix
+        }
+        
+        // Process authentication
+        String[] authParts = authInput.split(",", 2);
+        if (authParts.length != 2) {
+            sendMessage("Invalid format. Use: username,token");
+            disconnect(false);
+            return;
+        }
 
-            // authentication loop
-            if (!authenticateUser()) {
-                // authentication failed, disconnect client
+        String username = authParts[0];
+        String token = authParts[1];
+
+        // Check if user is already logged in (skip for verification)
+        if (!isVerificationOnly && this.userManager.isUserOnline(username)) {
+            sendMessage("User already logged in.");
+            disconnect(false);
+            return;
+        }
+
+        // Validate token with auth server
+        if (this.userManager.authenticateWithToken(username, token, this)) {
+            this.username = username;
+            
+            if (isVerificationOnly) {
+                // Just for verification, send success and disconnect
+                sendMessage("VERIFIED:SUCCESS");
                 disconnect(false);
                 return;
             }
-
-            // Check if this is just a verification connection
-            String nextCommand = in.readLine();
-            if (nextCommand != null && nextCommand.equals("VERIFY_ONLY")) {
-                // This is just a verification connection, don't broadcast join
-                sendMessage("Verification successful");
-                disconnect(false); // Don't broadcast a leave message
-                return;
-            }
             
-            // send welcome message
+            // Regular connection - continue with chat
             sendMessage("Authentication successful");
-
-            // broadcast that a new user has joined the chat
+            sendMessage("Welcome to the chat, " + this.username + "!");
+            
+            // Broadcast that a user has joined
             server.broadcast(this.username + " has joined the chat!", this);
 
-            // the main message loop
+            // The main message loop
             String message;
             while(running && (message = in.readLine()) != null) {
                 if (message.startsWith("/")) {
-                  handleCommand(message);
+                    handleCommand(message);
                 } else {
-                    // regular broadcast
-                    server.broadcast(this.username + " " + message, this);
+                    // Regular broadcast
+                    server.broadcast(this.username + ": " + message, this);
                 }
             }
-            
-        } catch (IOException e) {
-            System.out.println("Error handling client... " + e.getMessage() +
-                               "\n Disconnecting client(" + this.username + ")...");
-        } finally {
-            disconnect(true);
+        } else {
+            sendMessage("Authentication failed. Invalid token.");
+            disconnect(false);
         }
+    } catch (IOException e) {
+        System.out.println("Error handling client... " + e.getMessage() + 
+                        "\n Disconnecting client(" + (this.username != null ? this.username : "unknown") + ")...");
+    } finally {
+        disconnect(true);
     }
+}
 
     public boolean authenticateUser() throws IOException {
         int attempts = 0;
