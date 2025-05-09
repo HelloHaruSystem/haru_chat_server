@@ -67,7 +67,17 @@ public class ChatServer {
             if (sender != null && client == sender) {
                 continue;
             }
+
+            // Check if the message already has a username prefix
+            if (message.contains(" has joined the chat") || 
+            message.contains(" has left the chat") ||
+            message.contains(": ")) {
             client.sendMessage(message);
+            } else {
+            // Add a system prefix for messages without a sender
+            client.sendMessage("System: " + message);
+            }
+
         }
     }
 
