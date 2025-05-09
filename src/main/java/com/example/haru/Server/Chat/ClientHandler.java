@@ -155,7 +155,7 @@ public class ClientHandler implements Runnable {
         String targetUser = parts[1];
         String privateMessage = parts[2];
 
-        ClientHandler targetClient = this.userManager.getClientHandlerByUsername(targetUser);
+        ClientHandler targetClient = this.userManager.getClientHandler(targetUser);
         if (targetClient == null) {
             sendMessage("User " + targetUser + " is not online.");
         } else {

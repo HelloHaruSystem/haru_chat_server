@@ -15,6 +15,12 @@ public class App {
         } 
         System.out.println( "Server starting on port " + portNumber + "...");
         ChatServer server = ChatServer.getInstance(portAsInteger);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down server...");
+            server.stop();
+        }));
+
         server.start();
     }
 }
