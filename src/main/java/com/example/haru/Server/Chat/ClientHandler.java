@@ -42,7 +42,16 @@ public class ClientHandler implements Runnable {
             // authentication loop
             if (!authenticateUser()) {
                 // authentication failed, disconnect client
-                disconnect();
+                disconnect(false);
+                return;
+            }
+
+            // Check if this is just a verification connection
+            String nextCommand = in.readLine();
+            if (nextCommand != null && nextCommand.equals("VERIFY_ONLY")) {
+                // This is just a verification connection, don't broadcast join
+                sendMessage("Verification successful");
+                disconnect(false); // Don't broadcast a leave message
                 return;
             }
             
@@ -67,7 +76,7 @@ public class ClientHandler implements Runnable {
             System.out.println("Error handling client... " + e.getMessage() +
                                "\n Disconnecting client(" + this.username + ")...");
         } finally {
-            disconnect();
+            disconnect(true);
         }
     }
 
@@ -127,12 +136,17 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void disconnect() {
+    public void disconnect(boolean broadcastLeave) {
         try {
             this.running = false;
-            server.removeClient(this);
-            server.broadcast(this.username + " has left the chat.", null);
 
+            if (this.username != null && broadcastLeave) {
+                server.removeClient(this);
+                server.broadcast(this.username + " has left the chat.", null);
+            } else {
+                server.removeClient(this);
+            }
+            
             if (this.in != null) {
                 this.in.close();
             }
