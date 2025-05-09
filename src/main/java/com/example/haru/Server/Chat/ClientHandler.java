@@ -17,6 +17,9 @@ public class ClientHandler implements Runnable {
     private boolean running;
     private UserManager userManager;
 
+    // constants
+    private static final int MAX_AUTH_ATTEMPTS = 3;
+
     public ClientHandler(Socket socket, ChatServer server) throws IOException {
         this.clientSocket = socket;
         this.server = server;
@@ -34,6 +37,11 @@ public class ClientHandler implements Runnable {
             this.userManager = server.getUserManager();
 
             // authentication loop
+            if (!authenticateUser()) {
+                // authentication failed, disconnect client
+                disconnect();
+                return;
+            }
             
 
             // first message from client is telling the rest of the server that they have joined the chat
@@ -57,6 +65,47 @@ public class ClientHandler implements Runnable {
         } finally {
             disconnect();
         }
+    }
+
+    public boolean authenticateUser() throws IOException {
+        sendMessage("Authenticating please stand by...");
+
+        int attempts = 0;
+        while (attempts < MAX_AUTH_ATTEMPTS) {
+            String authInput = in.readLine();
+            if (authInput == null) {
+                return false;
+            }
+
+            String[] authParts = authInput.split(",", 2);
+            if (authParts.length != 2) {
+                System.out.println("invalid auth attempt");
+                attempts++;
+                continue;
+            }
+
+            String username = authParts[0];
+            String token = authParts[1];
+
+            // check if user is already logged in
+            if (this.userManager.isUserOnline(username)) {
+                System.out.println("User already logged in.");
+                attempts++;
+                continue;
+            }
+
+            // validate token with auth server
+            if (this.userManager.authenticateWithToken(username, token, this)) {
+                this.username = username;
+                return true;
+            } else {
+                System.out.println("Authentication failed. try again.");
+                attempts++;
+            }
+        }
+
+        System.out.println("Too many authentication attempts has made. Disconnecting...");
+        return false;
     }
 
     public void handleCommand(String message) {
