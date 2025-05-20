@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import org.java_websocket.WebSocket;
 
 import com.example.haru.Server.Users.UserManager;
 
@@ -16,11 +19,12 @@ public class ChatServer {
     private boolean running;
     private List<ClientHandler> connectedClients;
     private UserManager userManager;
+    private WebSocketChatServer wsServer; //Reference to WebSocket server
     
     // private constructor prevents instantiation from outside the class
     private ChatServer(int portNumber) {
         this.portNumber = portNumber;
-        this.connectedClients = new ArrayList<>();
+        this.connectedClients = Collections.synchronizedList(new ArrayList<>());
         this.userManager = new UserManager();
         this.running = false;
     }
@@ -31,6 +35,11 @@ public class ChatServer {
             instance = new ChatServer(port);
         }
         return instance;
+    }
+
+    // set the WebSocket server reference for cross-server broadcasting
+    public void setWebSocketServer(WebSocketChatServer wsServer) {
+        this.wsServer = wsServer;
     }
 
     // starts the server
@@ -49,7 +58,7 @@ public class ChatServer {
                 new Thread(clientThread).start();
             } 
         } catch (IOException e) {
-            System.out.println("Error accepting clients ");
+            System.out.println("Error accepting TCP clients: " + e.getMessage());
         }
     }
 
@@ -63,26 +72,53 @@ public class ChatServer {
 
     public void broadcast(String message, ClientHandler sender) {
         System.out.println("Broadcasting: " + message);
+
+        // broadcast to TCP clients
         for (ClientHandler client : this.connectedClients) {
             if (sender != null && client == sender) {
-                continue;
+                continue; // don't send the message back to the sender
             }
 
-            // Check if the message already has a username prefix
-            if (message.contains(" has joined the chat") || 
+            // format the message
+            String finalMessage = formatMessage(message);
+            client.sendMessage(finalMessage);
+        }
+
+        // broadcast to WebSocket clients
+        if (this.wsServer != null) {
+            WebSocket senderWs = null;
+
+            // check if sender s a WebSocket client
+            if (sender instanceof WebSocketClientAdapter) {
+                WebSocketClientAdapter adapter = (WebSocketClientAdapter) sender;
+                senderWs = adapter.getWebSocketHandler().getWebSocket();
+            }
+
+            String finalMessage = formatMessage(message);
+            wsServer.broadcastToWebSockets(finalMessage, senderWs);
+        }
+    }
+
+    private String formatMessage(String message) {
+        // Check if the message already has a proper prefix
+        if (message.contains(" has joined the chat") || 
             message.contains(" has left the chat") ||
-            message.contains(": ")) {
-            client.sendMessage(message);
-            } else {
+            message.contains(": ") ||
+            message.startsWith("System:") ||
+            message.startsWith("[Private")) {
+            return message;
+        } else {
             // Add a system prefix for messages without a sender
-            client.sendMessage("System: " + message);
-            }
-
+            return "System: " + message;
         }
     }
 
     public UserManager getUserManager() {
         return this.userManager;
+    }
+
+    public List<ClientHandler> getConnectedClients() {
+        return Collections.unmodifiableList(this.connectedClients);
     }
 
     // clean shutdown method
@@ -100,5 +136,10 @@ public class ChatServer {
                 System.out.println("Error closing server socket: " + e.getMessage());
             }
         }
+    }
+
+     // Getter for WebSocket server
+    public WebSocketChatServer getWebSocketServer() {
+        return this.wsServer;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.haru;
 
 import com.example.haru.Server.Chat.ChatServer;
+import com.example.haru.Server.Chat.WebSocketChatServer;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -30,19 +31,27 @@ public class App {
         // get instance and configure chat server (TCP)
         ChatServer tcpServer = ChatServer.getInstance(tcpPort);
         // get instance and configure chat server (WebSocket)
-        // WebSocketChatServer wsServer = WebSocketChatServer.getInstance(WebSocketChatServer);
+        WebSocketChatServer wsServer = WebSocketChatServer.getInstance(wsPort, tcpServer);
 
+        // link the servers so they can broadcast to each other's clients
+        tcpServer.setWebSocketServer(wsServer);
 
+        // shutdown hook for a clean server shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down server...");
             tcpServer.stop();
+            try {
+                wsServer.stop();
+            } catch (InterruptedException e) {
+                System.out.println("Error stopping WebSocket server:" + e.getMessage());
+            }
         }));
 
-        // start both servers on their own thread
+        // start TCP server on it's own thread and WebSocket server on the main thread
         new Thread(() -> {
             tcpServer.start();
-        });
+        }).start();
 
-        
+        wsServer.start();
     }
 }
