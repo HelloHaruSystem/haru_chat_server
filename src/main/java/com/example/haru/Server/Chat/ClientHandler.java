@@ -139,7 +139,7 @@ public void run() {
             // validate token with auth server
             if (this.userManager.authenticateWithToken(username, token, this)) {
                 this.username = username;
-                System.out.println("Authentication sucessful"); // debug
+                System.out.println("Authentication successful"); // debug
                 return true;
             } else {
                 sendMessage("Authentication failed. Invalid token.");
@@ -173,7 +173,6 @@ public void run() {
 
             if (this.username != null && broadcastLeave) {
                 server.removeClient(this);
-                server.broadcast(this.username + " has left the chat.", null);
             } else {
                 server.removeClient(this);
             }
